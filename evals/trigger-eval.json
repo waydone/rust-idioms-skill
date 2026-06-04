@@ -1,0 +1,22 @@
+[
+  {"query": "这段 Rust 报 E0382: let s = String::from(\"hi\"); let t = s; println!(\"{s}\"); 怎么改", "should_trigger": true},
+  {"query": "borrow checker 不让我同时拿 &mut 和 &,E0502,我这个结构体该怎么设计才不打架", "should_trigger": true},
+  {"query": "tokio::spawn 报 future cannot be sent between threads safely,因为我跨 .await 持有了 MutexGuard,怎么解", "should_trigger": true},
+  {"query": "帮我起个新的 rust cli 项目的 Cargo.toml,带 clap 和 anyhow,我用最新 rust", "should_trigger": true},
+  {"query": "我想给自己的 struct 写个 #[derive(Builder)] 过程宏,syn quote 那套怎么搭", "should_trigger": true},
+  {"query": "怎么测试一个返回 Result 的 async 函数,要并发跑那种,Rust", "should_trigger": true},
+  {"query": "is it idiomatic to return impl Iterator here or should i box it? rust 1.x edition 2024", "should_trigger": true},
+  {"query": "什么时候该用泛型什么时候用 dyn Trait,我这个插件系统 trait object 报 E0038 not object safe", "should_trigger": true},
+  {"query": "我这段 unsafe 里用 static mut 全局计数器,2024 edition 编不过了,正确写法是啥", "should_trigger": true},
+  {"query": "thiserror 和 anyhow 到底啥时候用哪个,我在写一个 lib 又有个 bin", "should_trigger": true},
+  {"query": "salvo 里 JwtAuth 中间件的构造器怎么写,finders 和 force_passed 那些", "should_trigger": false},
+  {"query": "salvo 怎么挂 SwaggerUi 把 OpenAPI doc 暴露出来", "should_trigger": false},
+  {"query": "用 python 的 dataclass 怎么做不可变对象", "should_trigger": false},
+  {"query": "帮我看下这个函数跳转到定义在哪,顺便找下所有引用", "should_trigger": false},
+  {"query": "soybean-admin 这个前端模板代码质量怎么样,值得用吗", "should_trigger": false},
+  {"query": "我的 axum handler 返回 Json 报错,axum 0.8 的 IntoResponse 怎么实现", "should_trigger": false},
+  {"query": "go 里的 goroutine 和 channel 怎么做生产者消费者", "should_trigger": false},
+  {"query": "cargo build 报链接错误 undefined symbol,是不是少链了系统库", "should_trigger": false},
+  {"query": "rustup 怎么装 nightly 然后切回 stable", "should_trigger": false},
+  {"query": "我的 React 组件 useEffect 里 async 报警告怎么处理", "should_trigger": false}
+]

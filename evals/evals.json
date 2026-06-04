@@ -1,0 +1,54 @@
+{
+  "skill_name": "rust-idioms",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "这段 Rust 编译报 E0382:`let s = String::from(\"hi\"); let t = s; println!(\"{s}\");`。怎么改?为什么?",
+      "expected_output": "指出 String 是 move 语义(非 Copy),`let t = s` 把所有权移走,s 失效。给根因层选择:要两个独立值用 s.clone()(说明成本);只需读用借用 &s;若想 t 拥有、后面不再用 s 则删掉对 s 的使用。不是无脑 clone 了事。",
+      "assertions": [
+        {"text": "解释 move 语义 / 所有权转移,而非仅给一行修复"},
+        {"text": "给出 clone vs 借用 的取舍而非默认 clone"}
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "我在 tokio::spawn 里用了一段持有 std::sync::MutexGuard 跨 .await 的代码,报 'future cannot be sent between threads safely / `MutexGuard` is not Send'。怎么解?",
+      "expected_output": "诊断:MutexGuard 是 !Send,跨 .await 点持有会让整个 future 变 !Send,而 tokio::spawn 要求 Send。解法:① 用 tokio::sync::Mutex(其 guard 可跨 await);② 或缩小 std::Mutex 锁作用域,在 .await 前 drop guard(用块作用域或显式 drop);③ CPU 重活用 spawn_blocking/rayon。",
+      "assertions": [
+        {"text": "指出 !Send 值跨 .await 是根因"},
+        {"text": "给出 tokio::sync::Mutex 或 drop-before-await 的修法"}
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "帮我起个新的 Rust CLI 项目的 Cargo.toml,带 clap 和 anyhow。",
+      "expected_output": "Cargo.toml 用 edition = \"2024\"(当前 stable Rust 1.95),不是过时的 2021;给 clap/anyhow 依赖。可注明 anyhow/clap 非平凡 API 用前 Context7 校验。",
+      "assertions": [
+        {"text": "edition 写 2024,不是 2021"},
+        {"text": "不把 edition 2021 当默认"}
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "我想给自己的 struct 写一个 #[derive(MyTrait)] 过程宏,怎么搭?",
+      "expected_output": "讲 proc-macro crate(proc-macro = true)结构、syn/quote/proc-macro2 角色、derive 宏骨架(parse_macro_input、DeriveInput、split_for_impl 处理泛型、quote! 生成、spanned syn::Error 报错)、cargo expand 调试;并提醒 syn 2.x API 用前 Context7 校验、能用泛型/函数就别用宏。",
+      "assertions": [
+        {"text": "涉及 proc-macro crate 结构 + syn/quote"},
+        {"text": "提到 split_for_impl 处理泛型 或 spanned 错误 或 Context7 校验"}
+      ],
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "我在 Salvo 项目里想给 /api 路由加 JwtAuth 中间件,构造器怎么写?",
+      "expected_output": "这是具体 Salvo 框架 API 问题,应由 salvo-skill 处理,不是 rust-idioms 的范围。rust-idioms 只管 Rust 语言层(若问题是 'JwtAuth 闭包里 future 不 Send' 这种语言层才接手)。",
+      "assertions": [
+        {"text": "识别为 Salvo 框架 API 问题 → 交给 salvo-skill,不该由本 skill 主答"}
+      ],
+      "files": []
+    }
+  ]
+}
