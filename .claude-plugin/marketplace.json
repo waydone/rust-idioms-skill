@@ -1,0 +1,14 @@
+{
+  "name": "rust-idioms-skill",
+  "owner": { "name": "waydone", "email": "coco18889@icloud.com" },
+  "metadata": { "description": "Rust language-layer idioms / design / compiler-error skill", "version": "0.1.0" },
+  "plugins": [
+    {
+      "name": "rust-idioms",
+      "source": "./",
+      "description": "Rust language-level idioms, design & compiler-error diagnosis (Rust 1.95 / edition 2024): ownership/lifetimes, error handling, traits/generics/dyn, iterators/closures, async-tokio Send, macros, testing, unsafe/FFI, modules/crates, E0xxx table. Every snippet cargo-check verified. Complements salvo-skill (framework) & rust-analyzer-lsp (tooling).",
+      "category": "development",
+      "tags": ["rust", "idioms", "borrow-checker", "async", "macros", "unsafe", "compiler-errors", "skill"]
+    }
+  ]
+}

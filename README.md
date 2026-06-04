@@ -31,3 +31,8 @@ Zero hooks, zero MCP servers, zero background agents, no extra permissions — p
 ## Verification
 
 All claimed-compilable code snippets across the references were assembled and `cargo check`-verified on rustc/cargo 1.95.0 (edition 2024), including a real proc-macro crate (derive end-to-end), async/Send cases, and the test snippets (unit + doctests). Built/maintained 2026-06 via the skill-creator flow with codex/agy compile-verification.
+
+## Install
+
+- **As a plugin (marketplace):** `/plugin marketplace add waydone/rust-idioms-skill`, then `/plugin install rust-idioms@rust-idioms-skill`.
+- **Local (symlink):** `ln -sfn /Users/coco/Documents/code/rust/rust-idioms-skill/skills/rust-idioms ~/.claude/skills/rust-idioms`.
