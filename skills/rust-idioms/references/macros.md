@@ -22,12 +22,12 @@ A `macro_rules!` arm matches input against a pattern of *metavariables* `$name:f
 
 | Specifier | Matches | Pick it when | Gotcha |
 |---|---|---|---|
-| `expr` | any expression | you'll *use* the value | parsed as one opaque unit — can't re-match inside; only `=> , ;` may follow |
+| `expr` | any expression | you'll *use* the value | parsed as one opaque unit — can't re-match inside; only `=> , ;` may follow. Edition 2024 also matches top-level `const {}` / `_` expressions; use `expr_2021` if you need the old matcher |
 | `ident` | a bare identifier | naming a fn/var/field you generate | not a path; `foo::bar` is not an `ident` |
 | `ty` | a type | generating type-position code | follow-set restricted (`=> , ; | { [ : >` …) |
 | `tt` | one token tree | forwarding/recursion, or "anything" | most permissive, least checked — overuse hides errors |
 | `path` | `a::b::<T>` path | trait/type paths | can't be followed by `<` (ambiguous with generics) |
-| `pat` | a pattern | `match`/`let` arms you build | edition-2024 `pat` includes top-level `|` (use `pat_param` to exclude) |
+| `pat` | a pattern | `match`/`let` arms you build | edition 2021+ `pat` includes top-level `|` (use `pat_param` to exclude) |
 | `literal` / `lifetime` / `block` / `stmt` / `item` / `meta` / `vis` | as named | targeted matching | `vis` can match *empty* (no `pub`) |
 
 **Why `expr`/`ty`/etc. can't be re-matched:** once a fragment is captured as a nonterminal it becomes a single opaque AST node ("`expr`-nonterminal"). You cannot then peek inside it with another macro arm. If you need to inspect structure, capture `$($t:tt)*` and recurse, or move to a proc-macro.
@@ -93,7 +93,7 @@ edition = "2024"
 proc-macro = true               # this line is what makes it a proc-macro crate
 
 [dependencies]
-syn = { version = "2", features = ["full"] }   # "full" only if you parse fns/exprs/items
+syn = "2"                                      # add features = ["full"] only for fns/exprs/items
 quote = "1"
 proc-macro2 = "1"
 # API surface of syn 2.x is large — verify non-trivial node types/fields with Context7
@@ -140,7 +140,7 @@ fn expand(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
 }
 ```
 
-(API confirmed against `syn` 2.x via Context7: `parse_macro_input!`, `DeriveInput`, `Generics::split_for_impl`, `Error::into_compile_error`. Verify field/variant walking — `Data`/`Fields`/`Index` — and any `full`-feature node before relying on it.)
+(API confirmed against `syn` 2.x via Context7: `parse_macro_input!`, `DeriveInput`, `Generics::split_for_impl`, `Error::into_compile_error`. In a real exported derive, generate an absolute public trait path rather than assuming `Hello` is imported at the call site. Verify field/variant walking — `Data`/`Fields`/`Index` — and any `full`-feature node before relying on it.)
 
 ## Error reporting — spanned, not panicked
 

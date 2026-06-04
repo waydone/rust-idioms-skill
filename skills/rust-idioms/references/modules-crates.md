@@ -73,9 +73,9 @@ serde = { version = "1", features = ["derive"] }
 ```
 
 ```toml
-# crates/core/Cargo.toml
+# crates/my_app_core/Cargo.toml
 [package]
-name = "core"
+name = "my_app_core"
 edition.workspace = true     # inherit
 version.workspace = true
 

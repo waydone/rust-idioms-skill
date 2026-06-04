@@ -77,8 +77,8 @@ async fn fix_b(state: &tokio::sync::Mutex<Vec<u8>>) {
 
 | 机制 | 用于 | 关键点 |
 |---|---|---|
-| `tokio::spawn` | I/O-bound async 任务,需并发 | future 必须 `Send + 'static`;返回 `JoinHandle`;**任务 detach 后 panic 不会传播到 main**,要 `.await` handle 才看得到 `Err(JoinError)` |
-| `spawn_blocking` | 偶发的阻塞调用 / 短 CPU 活,数量有限 | 跑在独立的 blocking 线程池(默认上限 512),**不适合大量长 CPU 任务**——会把池打满;返回的闭包是 `FnOnce + Send + 'static` |
+| `tokio::spawn` | I/O-bound async 任务,需并发 | future 及其输出都必须 `Send + 'static`;返回 `JoinHandle`;**任务 detach 后 panic 不会传播到 main**,要 `.await` handle 才看得到 `Err(JoinError)` |
+| `spawn_blocking` | 偶发的阻塞调用 / 短 CPU 活,数量有限 | 跑在独立的 blocking 线程池(默认上限 512),**不适合大量长 CPU 任务**——会把池打满;闭包及其返回值都必须 `Send + 'static` |
 | `rayon` | 数据并行的重 CPU 计算(`par_iter`) | 独立的 CPU 线程池,按核心数;**不要在 rayon 闭包里 `.await`**;async ↔ rayon 之间用 oneshot channel 桥接 |
 
 **反模式**:在 async 里直接跑长 CPU 循环(卡 worker);或用 `spawn_blocking` 跑成百上千个并行计算(打满 blocking 池,且它不做 CPU 亲和调度)。重计算 → `rayon`;桥接示例:
@@ -142,7 +142,7 @@ tokio::select! {
 # async fn do_io() {}
 ```
 
-**取消安全(cancel safety)是 `select!` 的头号陷阱**:被 drop 的分支若已部分推进(如已从 socket 读走半条消息存在局部变量里),那部分状态**丢失**。只有标注"cancel safe"的 API(如 `mpsc::Recv`)能在 `select!` 里安全反复使用;否则把进行中的状态存在循环外、或用 `tokio_util::sync::CancellationToken` 做显式协作取消。`select!` 的随机分支选择、`biased;` 模式、循环里的用法**用前 Context7 校验** `tokio::select`。
+**取消安全(cancel safety)是 `select!` 的头号陷阱**:被 drop 的分支若已部分推进(如已从 socket 读走半条消息存在局部变量里),那部分状态**丢失**。只有标注"cancel safe"的 API(如 `tokio::sync::mpsc::Receiver::recv`)能在 `select!` 里安全反复使用;否则把进行中的状态存在循环外、或用 `tokio_util::sync::CancellationToken` 做显式协作取消。`select!` 的随机分支选择、`biased;` 模式、循环里的用法**用前 Context7 校验** `tokio::select`。
 
 并发等多个 future:用 `JoinSet`(动态、可取消、收集结果)或 `futures::future::join_all`(固定集合)。`JoinSet` 的 `spawn`/`join_next`/`abort_all` 语义**用前 Context7 校验**。
 

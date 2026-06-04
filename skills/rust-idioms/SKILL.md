@@ -21,7 +21,7 @@ This skill assumes **current stable Rust = 1.95** (cargo/rustc 1.95, 2026) and *
 
 ## Verify non-trivial third-party crate APIs with Context7
 
-Your training data lags the current releases of `thiserror`, `anyhow`, `tokio`, `syn`/`quote`, `proptest`, `criterion`, `serde`, etc. For anything beyond textbook usage of these crates, query Context7 before writing the code (e.g. `tokio` 1.x `JoinSet`/`select!` semantics, `thiserror` 2.x attributes, `syn` 2.x AST). Standard-library and language constructs (ownership, traits, `?`, iterators) you can write directly. When unsure, say the API is unverified and recommend `cargo check`.
+Your training data lags the current releases of `thiserror`, `anyhow`, `tokio`, `syn`/`quote`, `proptest`, `criterion`, `serde`, etc. For anything beyond textbook usage of these crates, query Context7 before writing the code (e.g. `tokio` 1.x `JoinSet`/`select!` semantics, `thiserror` 2.x attributes, `anyhow` 1.x context/downcast APIs, `syn` 2.x AST). Standard-library and language constructs (ownership, traits, `?`, iterators) you can write directly. When unsure, say the API is unverified and recommend `cargo check`.
 
 ## Standing rules
 

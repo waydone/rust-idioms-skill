@@ -2,7 +2,7 @@
 
 The core question is never "how do I write `?`" — it's **who is supposed to recover from this, and what do they need to know to do it?** That answer drives every choice below: `Result` vs `Option` vs `panic`, `thiserror` vs `anyhow`, how granular your enum is, and what crosses a public boundary.
 
-Assumes Rust 1.95 / edition 2024. `thiserror`/`anyhow` 2.x API beyond textbook usage → verify with Context7 before writing.
+Assumes Rust 1.95 / edition 2024. `thiserror` 2.x / `anyhow` 1.x API beyond textbook usage → verify with Context7 before writing.
 
 ## The decision tree: `Result` vs `Option` vs `panic`
 
@@ -162,13 +162,12 @@ pub enum ApiError {
     Internal(anyhow::Error),   // catch-all for "something broke" — log, don't leak
 }
 
-// One blanket From lets `?` funnel arbitrary internal errors into `Internal`,
-// while typed variants stay explicit at the call site.
-impl<E: Into<anyhow::Error>> From<E> for ApiError {
-    fn from(e: E) -> Self { ApiError::Internal(e.into()) }
-}
-
 impl ApiError {
+    // Explicit catch-all conversion for internal failures; typed variants stay explicit.
+    fn internal<E: Into<anyhow::Error>>(e: E) -> Self {
+        ApiError::Internal(e.into())
+    }
+
     fn parts(&self) -> (u16, &'static str) {
         match self {
             ApiError::NotFound     => (404, "not found"),
@@ -181,7 +180,7 @@ impl ApiError {
 
 Two language-level disciplines that matter here:
 
-1. **The error→status mapping lives in one place** (the response-conversion impl), so handlers stay `Ok(data)? / typed-error?` and never hand-build status codes. The blanket `From<E: Into<anyhow::Error>>` is acceptable *here specifically* because a 500 catch-all is exactly the contract at a service boundary — the opposite of the library case above.
+1. **The error→status mapping lives in one place** (the response-conversion impl), so handlers stay `Ok(data)? / typed-error?` and never hand-build status codes. Keep typed cases explicit, and route opaque internal failures through `ApiError::internal(e)` / `.map_err(ApiError::internal)?`; don't add a blanket `From<E>` unless you've deliberately accepted that every unmatched error becomes the same 500.
 2. **Public message vs. logged detail are different audiences.** Log the rich `source()` chain (`tracing::error!(error = ?e)`); return a generic string to the client. Putting `e.to_string()` in a 500 body leaks internals (paths, SQL, secrets). Map detail in, render detail out — never the same string for both.
 
 For the concrete framework trait, response negotiation, catchers, and panic-to-500 recovery, that's **framework API** → defer to salvo-skill.

@@ -8,7 +8,7 @@ Assumes Rust 1.95 / edition 2024. Test code is just Rust, so the language idioms
 |---|---|---|---|
 | `mod tests` inside the source file | yes (gate the module) | **yes** — same crate, child module | unit tests of private fns / internal invariants |
 | `tests/foo.rs` (integration) | no — whole file only compiles for tests | **no** — separate crate, only `pub` API | testing the crate as a consumer sees it |
-| `/// ```` doc comment | no | only `pub` API (runs as external crate) | examples that must stay correct |
+| `///` doc comment | no | only `pub` API (runs as external crate) | examples that must stay correct |
 | `benches/` (criterion) | no | only `pub` API | performance, not correctness |
 
 The split is the whole point: **unit tests verify internals, integration tests verify the public contract.** If an integration test needs a private item, that's a signal the item should be `pub` (or the test belongs in `mod tests`).
@@ -50,8 +50,8 @@ Three ways a test signals failure. Choose by what you're actually asserting:
 #[should_panic(expected = "index out of bounds")]
 fn oob_panics() {
     let v = vec![1];
-    let i = std::hint::black_box(5); // runtime index — a CONST index like v[5] into a fixed array
-    let _ = v[i];                    // is caught by the deny-by-default `unconditional_panic` lint at COMPILE time
+    let i = std::hint::black_box(5); // runtime index — a const index like [1][5]
+    let _ = v[i];                    // runtime panic, so #[should_panic] observes the behavior
 }
 
 // 2. The test body uses `?` for setup that *shouldn't* fail. Return Result so `?`
@@ -172,7 +172,7 @@ async fn concurrent() { /* ... */ }
 
 Pitfalls specific to async tests:
 - A hung `.await` (deadlock, never-resolving future) makes the test **hang forever**, not fail — wrap suspect awaits in `tokio::time::timeout(...)` so a regression surfaces as a failure.
-- For time-based logic, use `tokio::time::pause()` + `advance()` (start the test with `#[tokio::test(start_paused = true)]`) instead of real `sleep` — deterministic and instant.
+- For time-based logic, use `tokio::time::pause()` + `advance()` (requires Tokio's `test-util` feature; start the test with `#[tokio::test(start_paused = true)]`) instead of real `sleep` — deterministic and instant.
 - The `Send`-across-`.await` rules from `async-tokio.md` still bite in tests; a `!Send` guard held across an await fails the same way.
 
 ## Running, filtering, isolating

@@ -16,7 +16,7 @@ These all come from one model: a value has one owner; you may have *many* `&T` *
 | **E0503** | use of a value while it's mutably borrowed | let the `&mut` end (drop/last-use) before reading | Usually NLL solves it by reordering; persistent ⇒ same split-the-borrow story as E0499. |
 | **E0505** | move out of a value that is borrowed | move *after* the borrow ends; or hand out an owned clone instead of moving the original | Often a sign an API takes `self` when it should take `&self`. |
 | **E0506** | assign to a variable that is borrowed | end the borrow before reassigning | Frequently a loop holding a borrow across an iteration that also mutates — restructure the loop body. |
-| **E0507** | move out of borrowed content (`&`/`&mut`/index/`Vec`) | `mem::take`/`mem::replace` to swap out leaving a valid value; `Option::take`; `clone`; or `Vec::remove`/`swap_remove`/`drain` for containers; match on `&pat` / use `ref` to borrow instead of bind-by-move | Moving out of `self.field` in a `&mut self` method ⇒ `Option<T>` + `take()`, or `mem::replace`, is the idiom. |
+| **E0507** | move out of borrowed content (`&`/`&mut`/index/`Vec`) | borrow if you only read (`first()` instead of `[0]`); consume the owner if you need ownership (`into_iter()` + `next()`); or use `mem::take`/`replace`, `Option::take`, `Vec::remove`/`swap_remove`/`drain` when you must leave valid storage behind | Moving out of `self.field` in a `&mut self` method ⇒ `Option<T>` + `take()`, or `mem::replace`, is the idiom. |
 | **E0515** | returning a reference to a local (`cannot return value referencing local variable`) | return the owned value (`String`/`Vec`/`T`), not `&` to it; or `Cow`; or restructure so the caller owns the buffer and you write into it | The classic "I want a getter that computes" — return owned or `impl Iterator`, don't fight to borrow a temporary. |
 | **E0596** | `cannot borrow as mutable` | make the binding `let mut`; take `&mut self`; or for interior mutability use `Cell`/`RefCell`/`Mutex` | If the field is behind `&self` and "needs" mutation, decide deliberately: interior mutability (`RefCell`/atomics) vs. genuinely needing `&mut self`. Don't sprinkle `RefCell` to dodge the borrow checker. |
 | **E0597** | borrowed value does not live long enough | extend the owner's scope (bind the temporary to a `let`); store the owned value, not a borrow; or invert ownership so the long-lived side owns the data | Self-referential struct (struct holding a `&` into its own field) ⇒ **redesign**: use indices/IDs, `Rc`, `ouroboros`, or owned data. Do not chase it with lifetimes. |
@@ -44,7 +44,7 @@ impl Conn {
 fn swap_field(buf: &mut String) -> String { mem::take(buf) }     // leaves String::new()
 ```
 
-`for x in &v` borrows; `for x in v` consumes. Matching `Some(s)` on `&Option<_>` tries to move `s` out (E0507) — match on the reference (`Some(s)` auto-refs via default binding modes, or use `if let Some(s) = &opt`).
+`for x in &v` borrows; `for x in v` consumes. If you own a `Vec` and want the first owned item plus the rest, use `let mut it = v.into_iter(); let Some(first) = it.next() else { return; }; for x in it { ... }` rather than `remove(0)`. Matching a borrowed option is fine (`if let Some(s) = &opt` or `opt.as_ref()` gives `&T`); E0507 appears when you force by-value extraction from borrowed storage (`*r`, `v[i]`, a `RefCell` borrow).
 
 ## Trait / generics cluster
 

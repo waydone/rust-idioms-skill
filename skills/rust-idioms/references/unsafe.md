@@ -1,6 +1,6 @@
 # Unsafe & FFI
 
-`unsafe` doesn't disable the borrow checker or "turn off safety" — it lets you do five things the compiler can't verify: deref a raw pointer, call an `unsafe` fn, access/modify a `static mut` or `union` field, implement an `unsafe` trait, and (edition 2024) call FFI inside `unsafe extern`. Everything else still gets checked. Your job in an `unsafe` block is to **manually uphold the invariants the compiler normally guarantees** — and to write down *which* invariants and *why* they hold.
+`unsafe` doesn't disable the borrow checker or "turn off safety" — it lets you do five things the compiler can't verify: deref a raw pointer, call an `unsafe` fn, access/modify a `static mut` or `union` field, implement an `unsafe` trait, and declare foreign items in an `unsafe extern` block (edition 2024). Everything else still gets checked. Your job in an `unsafe` block is to **manually uphold the invariants the compiler normally guarantees** — and to write down *which* invariants and *why* they hold.
 
 ## When `unsafe` is legitimate (and when it's a smell)
 
@@ -40,7 +40,7 @@ A `// SAFETY:` that just restates the code ("// SAFETY: deref the pointer") is w
 
 ## `MaybeUninit`, never `mem::uninitialized`
 
-`mem::uninitialized` / `mem::zeroed` for non-zeroable types is **instant UB** (produces an invalid value the moment it exists) and has been deprecated for years. Use `MaybeUninit<T>`:
+`mem::uninitialized` is deprecated, and `mem::zeroed` is only sound for types where the all-zero bit pattern is valid. For uninitialized storage, use `MaybeUninit<T>`:
 
 ```rust
 use std::mem::MaybeUninit;
@@ -53,7 +53,7 @@ let init: &[u8] = unsafe {
 };
 ```
 
-Key rules: don't read a `MaybeUninit` before writing it; `assume_init` only after every byte you'll read is initialized; reading even one uninit byte as a real value is UB. For element-wise init prefer `MaybeUninit::write` then `assume_init_ref`/`slice_assume_init_ref`.
+Key rules: don't read a `MaybeUninit` before writing it; `assume_init` only after every byte you'll read is initialized; reading even one uninit byte as a real value is UB. For element-wise init prefer `MaybeUninit::write`, then either `assume_init_ref` per element or a carefully justified `slice::from_raw_parts` once you've tracked how many elements are initialized.
 
 ## Pointers: `NonNull`, `ptr::add`, provenance
 
@@ -100,16 +100,16 @@ If you do transmute, both types should be `#[repr(C)]` or `#[repr(transparent)]`
 The point of `unsafe` is to build a **safe public API** whose internal invariants make the unsafety sound — `Vec`, `String`, `Arc` are all `unsafe` inside, safe outside. The boundary holds only if no safe caller can break the invariant:
 
 ```rust
-pub struct Ascii(String); // invariant: always valid ASCII
+pub struct Ascii(Vec<u8>); // invariant: always valid ASCII
 
 impl Ascii {
-    pub fn new(s: String) -> Option<Self> {
-        s.is_ascii().then_some(Ascii(s)) // checked at the one entry point
+    pub fn new(bytes: Vec<u8>) -> Option<Self> {
+        bytes.is_ascii().then_some(Ascii(bytes)) // checked at the one entry point
     }
     pub fn as_str(&self) -> &str {
         // SAFETY: the only constructor rejects non-ASCII, and the field is
-        // private, so the invariant cannot be violated by safe code.
-        &self.0
+        // private, so the bytes are always valid UTF-8.
+        unsafe { std::str::from_utf8_unchecked(&self.0) }
     }
 }
 ```

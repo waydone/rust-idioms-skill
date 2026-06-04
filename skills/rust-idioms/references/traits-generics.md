@@ -30,7 +30,7 @@ for s in &shapes { s.draw(); }   // vtable dispatch
 
 ## Object safety (E0038) — *why* a trait can't be `dyn`
 
-`dyn Trait` is built behind a thin pointer + vtable, so every method must be callable knowing only "some `Self` of unknown size". A trait is **not** object-safe (the compiler now says "not dyn compatible") when it has:
+`dyn Trait` is used behind a wide pointer (data pointer + vtable), so every method must be callable knowing only "some `Self` of unknown size". A trait is **not** object-safe (the compiler now says "not dyn compatible") when it has:
 
 - a method returning or taking `Self` by value (`fn clone(&self) -> Self`) — size unknown behind the pointer;
 - a **generic method** (`fn f<T>(&self, t: T)`) — vtable can't hold infinitely many monomorphizations;
@@ -151,7 +151,7 @@ The anti-pattern is adding a `where T: SomeTrait` to silence it without asking *
 
 ## E0599 — "no method named `x` found" → usually a missing `use` for the trait
 
-A trait method is only in scope if the **trait is imported**. `s.parse()`, `bytes.read_exact()`, `it.try_collect()` all fail with E0599 until you `use std::str::FromStr` / `use std::io::Read` / `use itertools::Itertools`. The compiler often hints "method exists but trait not in scope" — that's the tell. Other E0599 causes: the bound that provides the method isn't satisfied (so the impl doesn't apply — go check the bounds), or you called an associated fn with `.` instead of `::`.
+A trait method is only in scope if the **trait is imported**. `bytes.read_exact()`, `file.write_all(...)`, `stream.next().await`, or `it.sorted()` fail with E0599 until you import the extension trait (`std::io::Read`, `std::io::Write`, `futures::StreamExt`, `itertools::Itertools`). The compiler often hints "method exists but trait not in scope" — that's the tell. Other E0599 causes: the bound that provides the method isn't satisfied (so the impl doesn't apply — go check the bounds), or you called an associated fn with `.` instead of `::`. (`str::parse` itself is an inherent method; it does not need `FromStr` in scope.)
 
 ## Anti-patterns
 

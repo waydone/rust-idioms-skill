@@ -59,7 +59,7 @@ fn run_each<F: FnMut(u32)>(mut f: F) { for i in 0..3 { f(i); } } // note: `mut f
 
 ## `move`: capture-by-value, decided per-variable
 
-`move` forces **every** capture to be taken by value (the capture is moved/copied in). Without it, the closure captures by the least-owning mode each use requires (`&`, then `&mut`, then by value). Since edition 2021 captures are **disjoint** — `move` on a closure that only touches `s.field` moves just that field's path, not all of `s`.
+`move` forces each captured place to be taken by value (moved/copied in). Without it, the closure captures by the least-owning mode each use requires (`&`, then `&mut`, then by value). Since edition 2021 captures are **disjoint** for ordinary structs — a `move` closure that only touches `s.field` can move just that field path, not all of `s` (packed structs and `Drop` types are more conservative).
 
 You need `move` whenever the closure **outlives the captured binding's scope**: spawned threads/tasks, returned closures, anything stored beyond the current frame.
 
