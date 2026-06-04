@@ -35,4 +35,8 @@ All claimed-compilable code snippets across the references were assembled and `c
 ## Install
 
 - **As a plugin (marketplace):** `/plugin marketplace add waydone/rust-idioms-skill`, then `/plugin install rust-idioms@rust-idioms-skill`.
-- **Local (symlink):** `ln -sfn /Users/coco/Documents/code/rust/rust-idioms-skill/skills/rust-idioms ~/.claude/skills/rust-idioms`.
+- **Local (symlink):** from the repo root, `ln -sfn "$PWD/skills/rust-idioms" ~/.claude/skills/rust-idioms`.
+
+## Updating after an edit
+
+Bump `version` in `.claude-plugin/{plugin,marketplace}.json`, `git push`, then `claude plugin marketplace update rust-idioms-skill && claude plugin update rust-idioms@rust-idioms-skill`, and restart. Without a version bump, `plugin update` reports "already at latest" and won't pull the new content.
