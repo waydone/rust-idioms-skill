@@ -1,6 +1,6 @@
 {
   "name": "rust-idioms",
   "description": "Rust language-level idioms, design, and compiler-error diagnosis — Rust 1.95 / edition 2024. Ownership, traits, async/Send, macros, testing, unsafe, E0xxx.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": { "name": "waydone", "email": "coco18889@icloud.com" }
 }
