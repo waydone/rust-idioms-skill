@@ -1,0 +1,20 @@
+{
+  "preamble": [],
+  "skip_if_contains": [
+    "proc_macro::",
+    "greet(user.name.clone())",
+    "fn store(s: &'static str)",
+    "write_all(buf)?",
+    "std::fs::read(\"big.bin\")",
+    "load_user(\"u.json\")",
+    "// fragment — needs:",
+    "macro_rules! my_macro { /* ... */ }",
+    "syn::Data::Union(_)",
+    "impl serde::Serialize for Config { /* ... */ }",
+    "mod client;",
+    "fn print_all<T: std::fmt::Display>(xs: &[T])",
+    "pub unsafe fn get_unchecked(&self"
+  ],
+  "_skip_reasons": "proc_macro:: needs a proc-macro crate; the rest are intentional doc fragments (free variables inside a body, ❌/✅ pairs defining the same fn twice, `mod x;` layout, macro-syntax illustration, method bodies without their impl).",
+  "value_placeholders": {}
+}
