@@ -1,6 +1,6 @@
 # Traits & generics
 
-Assumes **Rust 1.95 / edition 2024**. This file is about *design decisions* — static vs dynamic dispatch, how to phrase bounds, associated types vs type params, blanket impls, `impl Trait` — and the three errors that show up when you get them wrong (E0038, E0277, E0599/E0308). Non-trivial third-party trait APIs (`syn`/`quote`, `thiserror` derives) — verify with Context7 before writing.
+Assumes **Rust 1.99 / edition 2024**. This file is about *design decisions* — static vs dynamic dispatch, how to phrase bounds, associated types vs type params, blanket impls, `impl Trait` — and the three errors that show up when you get them wrong (E0038, E0277, E0599/E0308). Non-trivial third-party trait APIs (`syn`/`quote`, `thiserror` derives) — verify with Context7 before writing.
 
 ## Static (`T: Trait`) vs dynamic (`dyn Trait`) dispatch
 

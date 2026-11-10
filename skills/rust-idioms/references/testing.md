@@ -1,6 +1,6 @@
 # Testing
 
-Assumes Rust 1.95 / edition 2024. Test code is just Rust, so the language idioms in the other references apply. What's *specific* to testing is **where** a test lives (and what that implies about visibility), **how** you express the assertion/failure, and **which** third-party tool you reach for. This file is the decision layer, not a `cargo test` man page.
+Assumes Rust 1.99 / edition 2024. Test code is just Rust, so the language idioms in the other references apply. What's *specific* to testing is **where** a test lives (and what that implies about visibility), **how** you express the assertion/failure, and **which** third-party tool you reach for. This file is the decision layer, not a `cargo test` man page.
 
 ## Where a test lives — and why it matters
 
@@ -67,12 +67,16 @@ fn round_trips() -> Result<(), Box<dyn std::error::Error>> {
 **Anti-pattern:** `#[should_panic]` *without* `expected = "..."` on real code — it passes on *any* panic, including a typo-induced one in your test, giving false confidence. Always pin the substring. And don't reach for `#[should_panic]` when the function returns `Result<_, E>` — assert on the `Err` variant instead (richer, no unwinding):
 
 ```rust
+use std::assert_matches; // stable since 1.96, but NOT in the prelude — import it
+
 #[test]
 fn rejects_bad_input() {
-    let err = parse_config("").unwrap_err();
-    assert!(matches!(err, ConfigError::Empty));
+    assert_matches!(parse_config(""), Err(ConfigError::Empty));
+    assert_matches!(parse_config("x"), Err(ConfigError::Bad(s)) if s == "x"); // guards work
 }
 ```
+
+Prefer `assert_matches!` (1.96+) over `assert!(matches!(..))`: on failure it prints the actual value instead of just "assertion failed". On toolchains < 1.96 fall back to `assert!(matches!(..), "{err:?}")`.
 
 `Result`-returning tests cannot use `#[should_panic]` together — they're mutually exclusive models.
 

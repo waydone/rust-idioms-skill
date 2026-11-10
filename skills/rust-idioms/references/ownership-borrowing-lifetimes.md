@@ -104,4 +104,4 @@ You genuinely need `'static` for: `thread::spawn` / `tokio::spawn` closures (the
 - `Rc<RefCell<T>>` to escape the borrow checker → moves aliasing bugs from compile time to runtime panics; use only for genuine single-thread shared-mutable graphs.
 - `#[derive(Copy)]` to make move errors disappear → changes semantics silently and only papers over a borrow you should have written.
 
-> Version: assumes Rust 1.95 / edition 2024; all snippets here are std-only and need no crate. For wrapper-vs-async interactions (`!Send` across `.await`) see `async-tokio.md`; for `dyn`/object-safety lifetime bounds see `traits-generics.md`.
+> Version: assumes Rust 1.99 / edition 2024; all snippets here are std-only and need no crate. For wrapper-vs-async interactions (`!Send` across `.await`) see `async-tokio.md`; for `dyn`/object-safety lifetime bounds see `traits-generics.md`.

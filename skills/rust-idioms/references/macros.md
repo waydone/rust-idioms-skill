@@ -107,6 +107,8 @@ Why a separate crate: proc-macros are loaded as a compiler plugin (host arch), s
 | **attribute** | `#[proc_macro_attribute] fn(attr: TokenStream, item: TokenStream) -> TokenStream` | `#[name(args)] item` |
 | **function-like** | `#[proc_macro] fn(TokenStream) -> TokenStream` | `name!(...)` |
 
+Since **1.99** an attribute macro may also annotate an **outlined module** — `#[my_attr] mod foo;` (body in `foo.rs`) is stable, so module-level attribute macros no longer force you to inline the module.
+
 ### The three helper crates
 
 - **`proc-macro2`** — a mirror of the compiler's `proc_macro::TokenStream` that works *outside* the compiler (so you can unit-test and use it in `build.rs`). `syn`/`quote` speak `proc_macro2::TokenStream`; you convert at the boundary with `.into()`.
@@ -173,6 +175,7 @@ For proc-macros specifically: a parse that "does nothing" usually means you retu
 - **Bare names in an exported `macro_rules!` body.** Writing `Vec::new()` / `Result` / `my_helper()` assumes the caller imported them. Use `$crate::...` and `::std::...` absolute paths.
 - **`panic!`/`unwrap()` in a proc-macro.** Produces a useless "proc-macro panicked" with no source location. Return `syn::Result` and `Error::into_compile_error`.
 - **`tt`-soup matchers.** Capturing everything as `$($t:tt)*` and re-parsing by hand throws away `macro_rules!`'s structural matching and degrades errors to "no rules expected token". Use the specific fragment specifier; escalate to a proc-macro when you truly need to inspect structure.
+- **An expression macro whose body ends in `;`.** `macro_rules! sq { ($e:expr) => { $e * $e; } }` used as `let y = sq!(x);` — "trailing semicolon in macro used in expression position". In the defining crate this is already an **error**: `semicolon_in_expressions_from_macros` is deny-by-default (part of `future_incompatible`, verified on 1.99.1). Until 1.99 a macro from *another* crate got a pass; **1.99** added `semicolon_in_expressions_from_non_local_macros`, so a published macro with this bug now warns in every downstream build — your own integration tests (a separate crate) will show it too. Drop the `;` (or wrap statements in an inner `{ ... }` block that ends in an expression).
 - **Recursion without a base case / past the limit.** Recursive `macro_rules!` hits `recursion_limit` (default 128). Either provide a terminating arm or `#![recursion_limit = "256"]` consciously — silent blow-ups look like hangs.
 - **`syn` without pinning the feature set.** Pulling `features = ["full"]` when you only parse a `DeriveInput` bloats compile time; conversely, parsing an `ItemFn`/`Expr` without `full` fails to compile. Match the feature to what you parse.
 - **Hand-rolling generics in `quote!`.** Writing `impl<T> Trait for #name<T>` drops bounds, lifetimes, const generics, and where-clauses. Always go through `generics.split_for_impl()`.

@@ -12,7 +12,7 @@ Helps write idiomatic, correct Rust and unblock compiler errors fast — focused
 
 ## Version assumptions
 
-Pinned to **current stable Rust 1.95 / edition 2024**. New projects default to `edition = "2024"` (never the stale `2021`); existing projects match their `Cargo.toml`. Non-trivial third-party crate APIs (thiserror/anyhow/tokio/syn/quote/proptest) should be verified with Context7 before use.
+Pinned to **current stable Rust 1.99 (1.99.1) / edition 2024**. New projects default to `edition = "2024"` (never the stale `2021`); existing projects match their `Cargo.toml`. Non-trivial third-party crate APIs (thiserror/anyhow/tokio/syn/quote/proptest) should be verified with Context7 before use.
 
 ## Division of labor (don't overlap)
 
@@ -31,6 +31,13 @@ Zero hooks, zero MCP servers, zero background agents, no extra permissions — p
 ## Verification
 
 All claimed-compilable code snippets across the references were assembled and `cargo check`-verified on rustc/cargo 1.95.0 (edition 2024), including a real proc-macro crate (derive end-to-end), async/Send cases, and the test snippets (unit + doctests). Built/maintained 2026-06 via the skill-creator flow with codex/agy compile-verification.
+
+The v0.1.2 round (2026-11-09) re-pins to **Rust 1.99.1**, driven by the official `RELEASES.md` for 1.96.0 – 1.99.1. Every new claim was checked on rustc/cargo 1.99.1 rather than taken from the notes: `assert_matches!`/`debug_assert_matches!` run (and are **not** in the prelude — `use std::assert_matches;`, which the notes don't say), `bool::ok_or`, `Option`/`Result::map_or_default`, `Vec::into_parts`/`from_parts`, `Box::into_non_null`/`from_non_null`, `std::i32::MAX` → `deprecated` warning, `raw_borrows_via_references` firing on `&mut x as *mut _`, `build.warnings = "deny"` failing the build, a workspace member's `default-features = false` really dropping an inherited default (`cargo tree -e features`), and the macro trailing-`;` diagnostic (deny-by-default locally — corrected a first draft that called it "silently dropped"). A generated harness then put all 52 `rust` blocks into one crate and ran `cargo check --all-targets` on 1.99.1: **39 compile with 0 errors and no deprecation warnings**; the other 12 are intentional fragments (free variables inside a body, ❌/✅ pairs, `mod x;` layout, macro-syntax illustration) and the proc-macro derive needs its own `proc-macro` crate — no API-level error appeared anywhere. A grep for the 1.96–1.99 breaking patterns (`std::i32::MAX`-style paths, `use S::{self as ..}`, `Type = Type` where-bounds, `pin!(&mut ..)`) found none in the skill.
+
+## Changelog
+
+- **0.1.2** (2026-11-09) — re-pinned to Rust **1.99**; "new on stable since 1.95" section in `SKILL.md`; `assert_matches!` (with the import gotcha) replaces `assert!(matches!(..))` in testing; `bool::ok_or` + `map_or_default` in error-handling; `Vec::into_parts`/`Box::into_non_null`, `&raw` vs `as *mut` + `raw_borrows_via_references`, union-pattern UB note in unsafe; workspace `default-features = false` override in modules-crates; outlined-module attribute macros + non-local trailing-semicolon lint in macros; Cargo `build.warnings` for CI; dropped the soybean-admin-salvo routing branch from the trigger description.
+- **0.1.1** — compile-verified on 1.95.0; packaged as installable plugin.
 
 ## Install
 

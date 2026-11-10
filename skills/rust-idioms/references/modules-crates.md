@@ -83,7 +83,7 @@ version.workspace = true
 serde.workspace = true       # inherit version + features from the root
 ```
 
-Notes that bite: `resolver = "3"` is the edition-2024 default but is **only honored at the workspace root** — a per-crate `edition = "2024"` does not flip the workspace resolver. Workspace members share one `Cargo.lock` and one `target/`. Cyclic crate dependencies are forbidden (modules may be mutually recursive; crates may not). Verify exact `[workspace.dependencies]` inheritance syntax against current Cargo docs (Context7) if you hit an error — the `.workspace = true` form is stable but easy to mistype.
+Notes that bite: `resolver = "3"` is the edition-2024 default but is **only honored at the workspace root** — a per-crate `edition = "2024"` does not flip the workspace resolver. Workspace members share one `Cargo.lock` and one `target/`. Cyclic crate dependencies are forbidden (modules may be mutually recursive; crates may not). **Since Cargo 1.99** an edition-2024 member can turn *off* defaults of an inherited dependency — `serde = { workspace = true, default-features = false }` now really drops `serde`'s default features even if the root entry enables them (verified with `cargo tree -e features`); on older editions that key is ignored with a warning, so keep defaults off at the root and opt *in* per member there. Verify exact `[workspace.dependencies]` inheritance syntax against current Cargo docs (Context7) if you hit an error — the `.workspace = true` form is stable but easy to mistype.
 
 ## Feature flags & `cfg`: additive only
 

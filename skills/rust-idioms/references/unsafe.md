@@ -57,7 +57,7 @@ Key rules: don't read a `MaybeUninit` before writing it; `assume_init` only afte
 
 ## Pointers: `NonNull`, `ptr::add`, provenance
 
-- Use `NonNull<T>` over `*mut T` for "never-null, owned-ish" pointers: it's covariant and enables the null-pointer niche (so `Option<NonNull<T>>` is pointer-sized). Most collection internals use it.
+- Use `NonNull<T>` over `*mut T` for "never-null, owned-ish" pointers: it's covariant and enables the null-pointer niche (so `Option<NonNull<T>>` is pointer-sized). Most collection internals use it. Since 1.99 std round-trips owned buffers through `NonNull` directly: `Vec::into_parts()` → `(NonNull<T>, len, cap)` / `unsafe { Vec::from_parts(ptr, len, cap) }`, and `Box::into_non_null(b)` / `unsafe { Box::from_non_null(p) }` — prefer these to `into_raw_parts`/`Box::into_raw` + `NonNull::new_unchecked`.
 - `ptr.add(n)` / `ptr.offset(n)` advance by `n` **elements** (not bytes) and require the result to stay in-bounds of the *same allocation*; `wrapping_add` is the non-UB-but-useless-for-deref variant. For byte offsets use `byte_add`.
 - Don't fabricate a pointer from an integer cast and deref it (provenance is lost → UB under Stacked/Tree Borrows). If you must, use `ptr::with_exposed_provenance` / `expose_provenance` and understand what they mean.
 - Creating a `&T`/`&mut T` from a raw pointer asserts *full* reference validity (aligned, non-null, points to initialized `T`, no aliasing `&mut`). That's where most "it ran fine but miri screams" bugs live.
@@ -79,7 +79,9 @@ static REQUESTS: AtomicU64 = AtomicU64::new(0);
 REQUESTS.fetch_add(1, Ordering::Relaxed); // no unsafe, no UB
 ```
 
-If you genuinely need raw `static mut` (rare, e.g. a single-threaded embedded global), use `&raw mut`/`&raw const` to get a pointer *without* forming a reference — but reconsider first.
+If you genuinely need raw `static mut` (rare, e.g. a single-threaded embedded global), use `&raw mut`/`&raw const` to get a pointer *without* forming a reference — but reconsider first. The same applies generally: `&mut x as *mut _` / `&x as *const _` first creates a reference (with all its aliasing guarantees) and then decays it; write `&raw mut x` / `&raw const x` instead. 1.99 adds an allow-by-default `raw_borrows_via_references` lint that flags exactly this — worth `#![warn(...)]` in unsafe-heavy crates.
+
+**Unions in patterns (1.99 Reference change):** don't match a `union` field and another value in **one** pattern (the classic hand-rolled tagged union `match (tag, u) { (Tag::A, U { a }) => .. }`). The compiler may read the union field before checking the tag → UB. Match the tag first, then read the field in that arm (`unsafe { u.a }`).
 
 ## `transmute`: last resort, with preconditions
 

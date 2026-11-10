@@ -24,7 +24,7 @@
     {
       "id": 3,
       "prompt": "帮我起个新的 Rust CLI 项目的 Cargo.toml,带 clap 和 anyhow。",
-      "expected_output": "Cargo.toml 用 edition = \"2024\"(当前 stable Rust 1.95),不是过时的 2021;给 clap/anyhow 依赖。可注明 anyhow/clap 非平凡 API 用前 Context7 校验。",
+      "expected_output": "Cargo.toml 用 edition = \"2024\"(当前 stable Rust 1.99),不是过时的 2021;给 clap/anyhow 依赖。可注明 anyhow/clap 非平凡 API 用前 Context7 校验。",
       "assertions": [
         {"text": "edition 写 2024,不是 2021"},
         {"text": "不把 edition 2021 当默认"}

@@ -2,7 +2,7 @@
 
 The core question is never "how do I write `?`" — it's **who is supposed to recover from this, and what do they need to know to do it?** That answer drives every choice below: `Result` vs `Option` vs `panic`, `thiserror` vs `anyhow`, how granular your enum is, and what crosses a public boundary.
 
-Assumes Rust 1.95 / edition 2024. `thiserror` 2.x / `anyhow` 1.x API beyond textbook usage → verify with Context7 before writing.
+Assumes Rust 1.99 / edition 2024. `thiserror` 2.x / `anyhow` 1.x API beyond textbook usage → verify with Context7 before writing.
 
 ## The decision tree: `Result` vs `Option` vs `panic`
 
@@ -138,6 +138,8 @@ These are legitimate when the failure genuinely **cannot happen unless the progr
 In `main` / tests / build scripts, `unwrap`/`expect` are *idiomatic* — the program's whole job is to crash loudly on bad config. The anti-pattern is `unwrap()` in **library code or a long-running service request path**, where one bad input takes down the process (or panics across an FFI/`#[handler]` boundary). There, convert to `Result`.
 
 `let Some(x) = opt else { return Err(...) };` (let-else) is the idiomatic way to bail on a `None` you *can* recover from without nesting — reach for it before `match`/`if let` pyramids.
+
+For a **boolean** precondition, 1.98's `bool::ok_or` / `ok_or_else` turns it into a `Result` you can `?`: `(!name.is_empty()).ok_or(ConfigError::Empty)?;` (`ok_or_else(|| ..)` when building the error is costly). And `Option::map_or_default` / `Result::map_or_default` (1.98) replace `map_or(Default::default(), f)` / `.map(f).unwrap_or_default()` — `let len = opt.map_or_default(|s| s.len());`.
 
 ## Custom `Error` design — granularity
 
