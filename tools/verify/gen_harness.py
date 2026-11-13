@@ -91,11 +91,12 @@ for f in files:
         s = line.strip()
         if not inside and s.startswith("```rust"):
             inside, start, buf = True, i, []
+            indent = line[: len(line) - len(line.lstrip())]  # a fence nested in a list item is indented
         elif inside and s == "```":
             inside = False
             blocks.append([f.relative_to(skill_root), start, buf, "keep"])
         elif inside:
-            buf.append(line)
+            buf.append(line[len(indent):] if line.startswith(indent) else line)
 
 # 2. classify: skip / merge
 for n, blk in enumerate(blocks):
@@ -140,7 +141,7 @@ for n, (rel, start, body, state) in enumerate(blocks, 1):
         if col0 and line.startswith("//"):
             pending.append(line)
             continue
-        if col0 and not line.startswith(("}", ")", "]", ".", "?")):
+        if col0 and not line.startswith(("}", ")", "]", ".", "?", "where", "{")):  # continuation lines keep the mode
             new_mode = "item" if ITEM_START.match(line) else "stmt"
             if new_mode == "stmt" and mode == "stmt":
                 terminate(stmts)

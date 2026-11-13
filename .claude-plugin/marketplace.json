@@ -1,7 +1,7 @@
 {
   "name": "rust-idioms-skill",
   "owner": { "name": "waydone", "email": "coco18889@icloud.com" },
-  "metadata": { "description": "Rust language-layer idioms / design / compiler-error skill", "version": "0.1.3" },
+  "metadata": { "description": "Rust language-layer idioms / design / compiler-error skill", "version": "0.1.4" },
   "plugins": [
     {
       "name": "rust-idioms",

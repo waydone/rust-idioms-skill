@@ -17,3 +17,6 @@ syn = { version = "2", features = ["full"] }
 quote = "1"
 proc-macro2 = "1"
 futures = "0.3"
+
+[dev-dependencies]
+hello-derive = { path = "hello-derive" }

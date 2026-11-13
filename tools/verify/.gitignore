@@ -2,3 +2,4 @@
 /Cargo.lock
 /src/blocks/
 /src/blocks.rs
+/hello-derive/src/lib.rs

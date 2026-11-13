@@ -120,3 +120,38 @@ fn allocator_api_is_stable() {
     }
     assert!(generic(Global).capacity() >= 8);
 }
+
+// ---- 1.100 compatibility notes, reproduced (each behaves differently on 1.99.1) ----
+
+/// `Iterator::max`/`min` now go through `Ord::max`/`Ord::min` (1.99 used `cmp`), so an
+/// overridden `max`/`min` is observable.
+#[test]
+fn iterator_max_calls_ord_max() {
+    use std::cmp::Ordering;
+    use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
+    static CALLS: AtomicUsize = AtomicUsize::new(0);
+    #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Debug)]
+    struct W(i32);
+    impl Ord for W {
+        fn cmp(&self, o: &Self) -> Ordering {
+            self.0.cmp(&o.0)
+        }
+        fn max(self, o: Self) -> Self {
+            CALLS.fetch_add(1, SeqCst);
+            if self.0 >= o.0 { self } else { o }
+        }
+    }
+    assert_eq!([W(1), W(3), W(2)].into_iter().max(), Some(W(3)));
+    assert_eq!(CALLS.load(SeqCst), 2);
+}
+
+/// A closure no longer captures a place it only matches with non-binding patterns in `if let`
+/// (E0505 on 1.99.1: `t` was borrowed by the closure).
+#[test]
+#[allow(irrefutable_let_patterns)]
+fn if_let_without_bindings_captures_nothing() {
+    let t = (String::from("a"), String::from("b"));
+    let c = || if let (_, _) = t { 1 } else { 0 };
+    drop(t);
+    assert_eq!(c(), 1);
+}
