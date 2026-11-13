@@ -133,4 +133,4 @@ If naming the lifetime forces it to spread across half your codebase, that's the
 3. **Resist the silencer.** `.clone()`, `'static`, `Box::leak`, `unsafe`, `unwrap`, `let _ =`, `#[allow(...)]` each have a legitimate use and a lazy use. If you can't say *why* the silencer is correct here, it's masking the real fix (see `anti-patterns.md`).
 4. **`cargo check` after the fix**, and `rustc --explain E0XXX` for the canonical writeup. Anti-patterns this triage points away from are catalogued in `anti-patterns.md`; the per-cluster deep dives are the sibling references named in each section.
 
-> Version note: examples target **Rust 1.99 / edition 2024**. The edition-2024 temporary-scope and `if let` changes can surface fresh **E0716/E0597** in code that compiled on 2021 — that's expected; bind the temporary, don't downgrade the edition.
+> Version note: examples target **Rust 1.100 / edition 2024**. The edition-2024 temporary-scope and `if let` changes can surface fresh **E0716/E0597** in code that compiled on 2021 — that's expected; bind the temporary, don't downgrade the edition.

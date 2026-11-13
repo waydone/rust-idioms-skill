@@ -12,7 +12,7 @@ Helps write idiomatic, correct Rust and unblock compiler errors fast — focused
 
 ## Version assumptions
 
-Pinned to **current stable Rust 1.99 (1.99.1) / edition 2024**. New projects default to `edition = "2024"` (never the stale `2021`); existing projects match their `Cargo.toml`. Non-trivial third-party crate APIs (thiserror/anyhow/tokio/syn/quote/proptest) should be verified with Context7 before use.
+Pinned to **current stable Rust 1.100 (1.100.0) / edition 2024**. Every new `Cargo.toml` is `edition = "2024"` (the current edition and what `cargo new` writes — never the stale `2021`); existing projects match their `Cargo.toml`. Non-trivial third-party crate APIs (thiserror/anyhow/tokio/syn/quote/proptest) should be verified with Context7 before use.
 
 ## Division of labor (don't overlap)
 
@@ -34,6 +34,8 @@ All claimed-compilable code snippets across the references were assembled and `c
 
 The v0.1.2 round (2026-11-09) re-pins to **Rust 1.99.1**, driven by the official `RELEASES.md` for 1.96.0 – 1.99.1. Every new claim was checked on rustc/cargo 1.99.1 rather than taken from the notes: `assert_matches!`/`debug_assert_matches!` run (and are **not** in the prelude — `use std::assert_matches;`, which the notes don't say), `bool::ok_or`, `Option`/`Result::map_or_default`, `Vec::into_parts`/`from_parts`, `Box::into_non_null`/`from_non_null`, `std::i32::MAX` → `deprecated` warning, `raw_borrows_via_references` firing on `&mut x as *mut _`, `build.warnings = "deny"` failing the build, a workspace member's `default-features = false` really dropping an inherited default (`cargo tree -e features`), and the macro trailing-`;` diagnostic (deny-by-default locally — corrected a first draft that called it "silently dropped"). A generated harness (now in `tools/verify/`, see below) put all 55 `rust` blocks into one crate and ran `cargo check --all-targets` on 1.99.1: **41 compile with 0 errors and 0 warnings (no deprecated API)**; the 14 skipped are intentional fragments (free variables inside a body, ❌/✅ pairs defining the same fn twice, `mod x;` layout, macro-syntax illustration, method bodies without their `impl`) plus the proc-macro derive, which needs its own `proc-macro` crate — no API-level error appeared anywhere.
 
+The v0.1.3 round (2026-11-13) re-pins to **Rust 1.100.0**, driven by the official `RELEASES.md` entry. The existing 41 compiled blocks stayed at **0 errors / 0 warnings** on 1.100.0, and `tests/new_on_stable.rs` grew four tests for the 1.100 claims: `Result<T, !>` with irrefutable `let Ok(..)`, `Infallible` being the same type as `!`, `bool::toggle`, `trim_prefix`/`trim_suffix`, `Vec::from_fn`, `Box::map`/`Rc::map`/`Arc::map`, `Box::take`, `mem::DropGuard` (+ `dismiss`), and `Vec::new_in`/`Box::new_in` with `System`/`Global`. Testing corrected a first draft: there is **no** blanket `From<!>`, so `?` on a `Result<_, !>` into a custom error is E0277 until the error type implements `From<!>`. Also reproduced outside the harness: E0119 for a trait implemented for both `!` and `Infallible`; E0308 passing `&Vec<u8, System>` to `&Vec<u8>`; `cargo::unused_dependencies` warning by default and failing the build at `deny`. The remaining 1.100 compatibility notes (closure capture in `if let`, `box` patterns, `min`/`max`, `cargo install` lockfile, publish-age, build-dir layout) are quoted from the release notes and marked as such in `SKILL.md`.
+
 ### Re-verifying (after editing the skill or on a new Rust release)
 
 ```sh
@@ -45,6 +47,7 @@ It regenerates `tools/verify/src/blocks/` from every ```` ```rust ```` block (on
 
 ## Changelog
 
+- **0.1.3** (2026-11-13) — re-pinned to Rust **1.100**; never type (`Result<T, !>`, `Infallible` alias, the missing blanket `From<!>`, E0119) in `SKILL.md` + error-handling; stable allocator API (`Vec::new_in`, `Vec<T, A>` is a distinct type, `_in` raw-parts variants) in `SKILL.md` + unsafe; `trim_prefix`/`trim_suffix`, `Vec::from_fn`, `bool::toggle`, `Box`/`Rc`/`Arc::map`, `mem::DropGuard`; Cargo `[lints.cargo]` + default-on `unused_dependencies`, `cargo install` lockfile, publish-age, build-dir layout; edition-2024 rule widened to every `Cargo.toml` written and repeated in the description; 4 new `new_on_stable` tests.
 - **0.1.2** (2026-11-09) — re-pinned to Rust **1.99**; "new on stable since 1.95" section in `SKILL.md`; `assert_matches!` (with the import gotcha) replaces `assert!(matches!(..))` in testing; `bool::ok_or` + `map_or_default` in error-handling; `Vec::into_parts`/`Box::into_non_null`, `&raw` vs `as *mut` + `raw_borrows_via_references`, union-pattern UB note in unsafe; workspace `default-features = false` override in modules-crates; outlined-module attribute macros + non-local trailing-semicolon lint in macros; Cargo `build.warnings` for CI; dropped the soybean-admin-salvo routing branch from the trigger description.
 - **tooling** (2026-11-09, no plugin version bump — skill content unchanged) — verification harness committed as `tools/verify/` (`check.sh`, content-based fragment skips, `tests/new_on_stable.rs`); README re-verify instructions.
 - **0.1.1** — compile-verified on 1.95.0; packaged as installable plugin.

@@ -141,6 +141,8 @@ In `main` / tests / build scripts, `unwrap`/`expect` are *idiomatic* — the pro
 
 For a **boolean** precondition, 1.98's `bool::ok_or` / `ok_or_else` turns it into a `Result` you can `?`: `(!name.is_empty()).ok_or(ConfigError::Empty)?;` (`ok_or_else(|| ..)` when building the error is costly). And `Option::map_or_default` / `Result::map_or_default` (1.98) replace `map_or(Default::default(), f)` / `.map(f).unwrap_or_default()` — `let len = opt.map_or_default(|s| s.len());`.
 
+**Infallible results (1.100).** The never type is stable: an operation that cannot fail returns `Result<T, !>`, and the caller writes `let Ok(v) = infallible();` — the pattern is irrefutable because `Err(!)` cannot exist. `std::convert::Infallible` is now just an alias of `!`, so the `Err` type of `String: FromStr` or of a blanket `TryFrom` is `!` too. `?` does **not** make a never error disappear into your error type by itself: add `impl From<!> for MyError { fn from(never: !) -> Self { never } }` once (the body type-checks because `!` coerces to anything), or destructure with `let Ok(..)` instead of `?`.
+
 ## Custom `Error` design — granularity
 
 The variant count is a UX decision for your caller, not a style preference:
